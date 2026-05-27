@@ -1,102 +1,211 @@
+<!-- templates/index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Media Toolbox</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Media Toolbox with Whisper AI</title>
     <style>
-        body { font-family: Arial, sans-serif; max-width: 800px; margin: 20px auto; }
-        section { border: 1px solid #ccc; padding: 15px; margin-bottom: 20px; border-radius: 8px; }
-        input, button { margin-top: 5px; }
-        .result { margin-top: 10px; background: #f0f0f0; padding: 10px; border-radius: 4px; }
-        .loading { color: #555; font-style: italic; margin-top: 10px; }
-        .error { color: #d32f2f; background: #ffebee; padding: 10px; border-radius: 4px; }
-        button:disabled { opacity: 0.6; cursor: not-allowed; }
+        * { box-sizing: border-box; }
+        body { font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; max-width: 1200px; margin: 0 auto; padding: 20px; background: #f5f7fb; color: #1f2937; }
+        h1 { margin-bottom: 0.25em; }
+        .sub { color: #4b5563; margin-bottom: 2em; border-left: 4px solid #3b82f6; padding-left: 1em; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 20px; }
+        .card { background: white; border-radius: 16px; box-shadow: 0 4px 6px -2px rgba(0,0,0,0.05), 0 1px 2px 0 rgba(0,0,0,0.03); padding: 1.5rem; transition: 0.2s; border: 1px solid #e5e7eb; }
+        .card h2 { margin-top: 0; font-size: 1.35rem; display: flex; align-items: center; gap: 0.5rem; }
+        .card form { display: flex; flex-direction: column; gap: 12px; }
+        input, select, button { padding: 10px 12px; border-radius: 12px; border: 1px solid #d1d5db; font-size: 0.9rem; }
+        button { background-color: #3b82f6; color: white; font-weight: 600; border: none; cursor: pointer; transition: 0.1s; }
+        button:hover { background-color: #2563eb; }
+        button:disabled { opacity: 0.6; cursor: not-allowed; background-color: #9ca3af; }
+        .result { margin-top: 12px; background: #f3f4f6; border-radius: 12px; padding: 12px; font-size: 0.85rem; max-height: 250px; overflow-y: auto; white-space: pre-wrap; word-break: break-word; }
+        .error { color: #b91c1c; background: #fee2e2; border-radius: 12px; padding: 10px; margin-top: 8px; display: none; }
+        .loading { display: none; color: #2563eb; font-size: 0.85rem; margin-top: 8px; align-items: center; gap: 6px; }
+        hr { margin: 12px 0; }
+        .badge { background: #e5e7eb; border-radius: 30px; padding: 2px 10px; font-size: 0.7rem; font-weight: normal; margin-left: 8px; }
+        footer { margin-top: 40px; text-align: center; font-size: 0.8rem; color: #6b7280; }
     </style>
 </head>
 <body>
-    <h1>🎬 Media Toolbox</h1>
-    <p>Upload files and perform operations. For n8n, use the same endpoints with form-data.</p>
+<h1>🎬 Media Toolbox <span style="font-size: 0.9rem;">+ Whisper AI (timestamps, multilingual)</span></h1>
+<div class="sub">Upload, transcribe, convert, trim, dub, burn subs & more — all endpoints with live feedback.</div>
 
-    <section>
-        <h2>1. Separate Audio from Video</h2>
-        <form action="/separate" method="post" enctype="multipart/form-data">
+<div class="grid">
+    <!-- Audio Extraction -->
+    <div class="card">
+        <h2>🎧 1. Extract Audio</h2>
+        <form action="/separate" method="post" enctype="multipart/form-data" target="_blank">
             <input type="file" name="video" accept="video/*" required>
-            <button type="submit">Extract Audio</button>
+            <button type="submit">Extract MP3</button>
         </form>
-    </section>
+    </div>
 
-    <section>
-        <h2>2. Transcribe Audio</h2>
+    <!-- Whisper Transcription with timestamps -->
+    <div class="card">
+        <h2>📝 2. Transcribe (Whisper)</h2>
         <form id="transcribeForm">
-            <input type="file" name="audio" accept="audio/*" required>
-            <button type="submit" id="transcribeButton">Transcribe</button>
+            <input type="file" name="audio" accept="audio/*,video/*" required>
+            <button type="submit" id="transcribeBtn">Transcribe + Timestamps</button>
         </form>
-        <div id="loading" class="loading" style="display: none;">⏳ Processing... This may take a moment.</div>
-        <div id="transcriptionResult" class="result"></div>
-        <div id="transcriptionError" class="error" style="display: none;"></div>
-    </section>
+        <div id="transcribeLoading" class="loading">⏳ Whisper AI processing...</div>
+        <div id="transcribeResult" class="result"></div>
+        <div id="transcribeError" class="error"></div>
+    </div>
 
-    <section>
-        <h2>3. Merge Video & Audio</h2>
-        <form action="/merge" method="post" enctype="multipart/form-data">
-            <input type="file" name="video" accept="video/*" required><br>
-            <input type="file" name="audio" accept="audio/*" required><br>
-            <label>Volume multiplier (e.g., 1.0 = original, 2.0 = double):</label>
-            <input type="number" name="volume" step="0.1" value="1.0" required><br>
+    <!-- Merge Video+Audio -->
+    <div class="card">
+        <h2>🔊 3. Merge & Volume</h2>
+        <form action="/merge" method="post" enctype="multipart/form-data" target="_blank">
+            <input type="file" name="video" accept="video/*" required>
+            <input type="file" name="audio" accept="audio/*" required>
+            <input type="number" name="volume" step="0.1" value="1.0" placeholder="Volume (1.0)">
             <button type="submit">Merge & Download</button>
         </form>
-    </section>
+    </div>
 
-    <script>
-        const transcribeForm = document.getElementById('transcribeForm');
-        const transcribeButton = document.getElementById('transcribeButton');
-        const loadingDiv = document.getElementById('loading');
-        const resultDiv = document.getElementById('transcriptionResult');
-        const errorDiv = document.getElementById('transcriptionError');
+    <!-- Media Info -->
+    <div class="card">
+        <h2>ℹ️ 4. Media Info (ffprobe)</h2>
+        <form id="infoForm" enctype="multipart/form-data">
+            <input type="file" name="file" required>
+            <button type="submit">Get Info</button>
+        </form>
+        <div id="infoResult" class="result"></div>
+        <div id="infoError" class="error"></div>
+    </div>
 
-        transcribeForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
+    <!-- Convert -->
+    <div class="card">
+        <h2>🔄 5. Convert Format</h2>
+        <form action="/convert" method="post" enctype="multipart/form-data" target="_blank">
+            <input type="file" name="file" required>
+            <select name="format">
+                <option value="mp3">MP3</option>
+                <option value="wav">WAV</option>
+                <option value="aac">AAC</option>
+                <option value="ogg">OGG</option>
+                <option value="mp4">MP4</option>
+            </select>
+            <button type="submit">Convert & Download</button>
+        </form>
+    </div>
 
-            // Clear previous results/errors
-            resultDiv.innerText = '';
-            errorDiv.style.display = 'none';
-            errorDiv.innerText = '';
+    <!-- Trim -->
+    <div class="card">
+        <h2>✂️ 6. Trim (start/end)</h2>
+        <form action="/trim" method="post" enctype="multipart/form-data" target="_blank">
+            <input type="file" name="file" required>
+            <input type="text" name="start" placeholder="Start (hh:mm:ss or seconds)" value="0">
+            <input type="text" name="end" placeholder="End (optional)">
+            <button type="submit">Trim & Download</button>
+        </form>
+    </div>
 
-            // Show loading, disable button
-            loadingDiv.style.display = 'block';
-            transcribeButton.disabled = true;
+    <!-- Stretch (speed) -->
+    <div class="card">
+        <h2>⚡ 7. Speed (Audio)</h2>
+        <form action="/stretch" method="post" enctype="multipart/form-data" target="_blank">
+            <input type="file" name="file" accept="audio/*" required>
+            <input type="number" name="speed" step="0.1" value="1.5" placeholder="Speed (0.5 = half)">
+            <button type="submit">Stretch Audio</button>
+        </form>
+    </div>
 
-            const formData = new FormData(transcribeForm);
+    <!-- Burn Subtitles -->
+    <div class="card">
+        <h2>📺 8. Burn Subtitles</h2>
+        <form action="/burn_subtitles" method="post" enctype="multipart/form-data" target="_blank">
+            <input type="file" name="video" accept="video/*" required>
+            <input type="file" name="subtitles" accept=".srt,.ass" required>
+            <button type="submit">Burn & Download</button>
+        </form>
+    </div>
 
-            try {
-                const response = await fetch('/transcribe', {
-                    method: 'POST',
-                    body: formData
-                });
+    <!-- Dub (timing fix) -->
+    <div class="card">
+        <h2>🎙️ 9. Dub + Sync Fix</h2>
+        <form action="/dub" method="post" enctype="multipart/form-data" target="_blank">
+            <input type="file" name="video" accept="video/*" required>
+            <input type="file" name="audio" accept="audio/*" required>
+            <input type="text" name="offset" placeholder="Offset seconds (e.g., -0.5 or 1.2)" value="0">
+            <button type="submit">Dub & Download</button>
+        </form>
+        <div style="font-size:0.75rem; margin-top:6px;">⏱️ Negative offset = audio earlier, positive = later.</div>
+    </div>
+</div>
 
-                if (!response.ok) {
-                    // Try to parse error JSON, otherwise use status text
-                    let errorMsg = `HTTP error ${response.status}`;
-                    try {
-                        const errData = await response.json();
-                        errorMsg = errData.error || errorMsg;
-                    } catch {
-                        errorMsg = response.statusText || errorMsg;
-                    }
-                    throw new Error(errorMsg);
-                }
+<footer>⚡ All processing done in-memory | Temp files auto-cleaned | Whisper model: {{ whisper_model }} (env: WHISPER_MODEL)</footer>
 
-                const data = await response.json();
-                resultDiv.innerText = data.text || '(empty transcription)';
-            } catch (error) {
-                errorDiv.innerText = `Error: ${error.message}`;
-                errorDiv.style.display = 'block';
-            } finally {
-                // Hide loading, re-enable button
-                loadingDiv.style.display = 'none';
-                transcribeButton.disabled = false;
+<script>
+    // Transcription with live feedback
+    const transcribeForm = document.getElementById('transcribeForm');
+    const transcribeBtn = document.getElementById('transcribeBtn');
+    const loadingDiv = document.getElementById('transcribeLoading');
+    const resultDiv = document.getElementById('transcribeResult');
+    const errorDiv = document.getElementById('transcribeError');
+
+    transcribeForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        resultDiv.innerText = '';
+        errorDiv.style.display = 'none';
+        loadingDiv.style.display = 'flex';
+        transcribeBtn.disabled = true;
+
+        const formData = new FormData(transcribeForm);
+        try {
+            const response = await fetch('/transcribe', { method: 'POST', body: formData });
+            if (!response.ok) {
+                let errMsg = `HTTP ${response.status}`;
+                try { const data = await response.json(); errMsg = data.error || errMsg; } catch(e) {}
+                throw new Error(errMsg);
             }
-        });
-    </script>
+            const data = await response.json();
+            let output = `🗣️ Language: ${data.language}\n📝 Full text: ${data.text}\n\n⏱️ Segments with timestamps:\n`;
+            if (data.segments && data.segments.length) {
+                data.segments.forEach(seg => {
+                    output += `[${seg.start.toFixed(2)} → ${seg.end.toFixed(2)}] ${seg.text}\n`;
+                });
+            } else {
+                output += '(no segments)';
+            }
+            resultDiv.innerText = output;
+        } catch (err) {
+            errorDiv.innerText = `Error: ${err.message}`;
+            errorDiv.style.display = 'block';
+        } finally {
+            loadingDiv.style.display = 'none';
+            transcribeBtn.disabled = false;
+        }
+    });
+
+    // Info endpoint
+    const infoForm = document.getElementById('infoForm');
+    const infoResult = document.getElementById('infoResult');
+    const infoError = document.getElementById('infoError');
+    infoForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        infoResult.innerText = 'Loading...';
+        infoError.style.display = 'none';
+        const formData = new FormData(infoForm);
+        try {
+            const res = await fetch('/info', { method: 'POST', body: formData });
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const data = await res.json();
+            let pretty = `📁 ${data.filename || 'file'}\n`;
+            if (data.format) pretty += `📦 Format: ${data.format.format_name}\n⏱️ Duration: ${data.format.duration || 'unknown'}s\n`;
+            if (data.streams) {
+                data.streams.forEach(stream => {
+                    if (stream.codec_type === 'video') pretty += `🎥 Video: ${stream.codec_name} ${stream.width}x${stream.height}\n`;
+                    if (stream.codec_type === 'audio') pretty += `🎧 Audio: ${stream.codec_name} ${stream.sample_rate}Hz ${stream.channels}ch\n`;
+                });
+            }
+            infoResult.innerText = pretty || JSON.stringify(data, null, 2);
+        } catch (err) {
+            infoError.innerText = `Failed: ${err.message}`;
+            infoError.style.display = 'block';
+            infoResult.innerText = '';
+        }
+    });
+</script>
 </body>
 </html>
