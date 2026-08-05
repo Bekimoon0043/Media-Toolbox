@@ -1,5 +1,4 @@
-# Keep this minimal. Torch is installed separately in the Dockerfile (CPU wheels).
+# Keep this minimal. Torch and Whisper are installed separately in the Dockerfile.
 Flask>=3.0,<3.1
 Werkzeug>=3.0,<3.1
 gunicorn>=22.0
-openai-whisper==20240930
