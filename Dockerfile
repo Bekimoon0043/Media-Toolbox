@@ -7,6 +7,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     WHISPER_MODEL=tiny \
     PORT=5000
 
+# System deps
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ffmpeg \
     libsndfile1 \
@@ -14,11 +15,17 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /app
 
-COPY requirements.txt .
+# 1) CPU-only PyTorch (must use pytorch.org index — do NOT list torch in requirements.txt)
 RUN pip install --upgrade pip && \
-    pip install torch==2.4.1 torchaudio==2.4.1 --index-url https://download.pytorch.org/whl/cpu && \
-    pip install -r requirements.txt
+    pip install --no-cache-dir \
+      torch==2.4.1 torchaudio==2.4.1 \
+      --index-url https://download.pytorch.org/whl/cpu
 
+# 2) App deps (whisper + flask, etc.) — no torch here so pip will not reinstall GPU wheels from PyPI
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Pre-download Whisper tiny model into the image
 RUN python -c "import whisper; whisper.load_model('tiny')"
 
 COPY . .

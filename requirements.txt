@@ -2,8 +2,6 @@ Flask==3.0.3
 Werkzeug==3.0.6
 gunicorn==23.0.0
 openai-whisper==20240930
-torch==2.4.1
-torchaudio==2.4.1
 numpy==1.26.4
 numba==0.60.0
 tiktoken==0.8.0
