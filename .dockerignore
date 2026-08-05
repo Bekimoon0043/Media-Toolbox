@@ -1,0 +1,17 @@
+.git
+.local
+.replit
+__pycache__
+*.pyc
+*.pyo
+.env
+.venv
+venv
+*.md
+!README.md
+.DS_Store
+*.bin
+.agent*
+workflow-logs
+artifacts
+node_modules

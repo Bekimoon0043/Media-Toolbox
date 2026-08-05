@@ -1,0 +1,17 @@
+# Render Blueprint — one-click deploy from GitHub
+# https://render.com/docs/blueprint-spec
+services:
+  - type: web
+    name: media-toolbox
+    runtime: docker
+    plan: free
+    region: oregon
+    healthCheckPath: /health
+    envVars:
+      - key: WHISPER_MODEL
+        value: tiny
+      - key: PYTHONUNBUFFERED
+        value: "1"
+    # Docker build uses Dockerfile in repo root
+    dockerContext: .
+    dockerfilePath: ./Dockerfile
