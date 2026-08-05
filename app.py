@@ -39,7 +39,16 @@ def cleanup_temp_files():
 
 @app.after_request
 def after_request(response):
-    cleanup_temp_files()
+    # Defer cleanup until after the response body is fully sent (needed for send_file)
+    files = list(getattr(g, 'temp_files', []))
+    def _cleanup():
+        for path in files:
+            try:
+                if os.path.exists(path):
+                    os.unlink(path)
+            except Exception:
+                pass
+    response.call_on_close(_cleanup)
     return response
 
 def register_temp_file(path):
@@ -68,7 +77,7 @@ def run_ffmpeg(cmd, description='ffmpeg command'):
 # -------------------------------------------------------------------
 @app.route('/')
 def index():
-    return render_template('index.html')
+    return render_template('index.html', whisper_model=app.config['WHISPER_MODEL'])
 
 @app.route('/separate', methods=['POST'])
 def separate_audio():
