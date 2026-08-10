@@ -1,81 +1,62 @@
-# Media Toolbox + Whisper AI
+# Media Toolbox + Whisper AI (Render Free optimized)
 
-Web UI and API for media processing with **ffmpeg** and **OpenAI Whisper** transcription (timestamps, multilingual).
+Lightweight media processing API with **ffmpeg** + **OpenAI Whisper** transcription.
 
-## Features
+**Optimized for Render Free tier (512 MB)** and videos up to **3 minutes**.
 
-| Tool | Endpoint | Description |
-|------|----------|-------------|
-| Extract audio | `POST /separate` | Video → MP3 |
-| Transcribe | `POST /transcribe` | Whisper segments + full text |
-| Merge | `POST /merge` | Video + audio + volume |
-| Media info | `POST /info` | ffprobe JSON |
-| Convert | `POST /convert` | Format conversion (mp3/wav/aac/ogg/mp4) |
-| Trim | `POST /trim` | Cut by start/end time |
-| Speed | `POST /stretch` | Change audio tempo |
-| Burn subs | `POST /burn_subtitles` | SRT burned into video |
-| Dub | `POST /dub` | Replace audio with optional offset |
-| Health | `GET /health` | Service + model status |
+This is the main thing **Rendi.dev does not give you**: speech-to-text with timestamps.
 
-Upload limit: **100 MB**. Temp files are cleaned after each request.
+## Features (what Rendi does NOT have)
 
----
+| Endpoint | Description |
+|----------|-------------|
+| `POST /transcribe` | **Whisper transcription** + timestamps + language detection |
+| `POST /separate` | Extract audio from video → MP3 |
+| `POST /info` | Media info (ffprobe) |
+| `POST /convert` | Convert format (mp3/wav/aac/ogg/mp4) |
+| `POST /trim` | Trim by start/end time |
+| `GET /health` | Health check |
 
-## Deploy on Render (from GitHub)
+## Limits (Free tier)
 
-### Option A — Blueprint (recommended)
+- Maximum duration: **3 minutes (180 seconds)**
+- Whisper model: **tiny** only
+- Upload size: ~80 MB
+- Memory: optimized for 512 MB
 
-1. Open [Render Dashboard](https://dashboard.render.com) → **New** → **Blueprint**.
-2. Connect the repo `Bekimoon0043/Media-Toolbox`.
-3. Render reads `render.yaml` and creates a Docker web service.
-4. Click **Apply**.
+## Deploy on Render (Free)
 
-### Option B — Manual Web Service
+1. Go to [Render Dashboard](https://dashboard.render.com) → **New** → **Blueprint**
+2. Connect the repo `Bekimoon0043/Media-Toolbox`
+3. Click **Apply**
 
-1. **New** → **Web Service** → connect this GitHub repo.
-2. Settings:
-   - **Runtime**: Docker
-   - **Branch**: `main`
-   - **Dockerfile path**: `./Dockerfile`
-   - **Plan**: Free (or Starter for more RAM/timeout)
-3. Optional env var: `WHISPER_MODEL=tiny` (keep tiny on free tier).
-
-After deploy, open `https://<your-service>.onrender.com` and check `GET /health`.
-
----
-
-## Local run (Docker)
-
-```bash
-docker build -t media-toolbox .
-docker run -p 5000:5000 -e WHISPER_MODEL=tiny media-toolbox
-```
-
-Or without Docker (ffmpeg required):
-
-```bash
-pip install -r requirements.txt
-pip install torch torchaudio --index-url https://download.pytorch.org/whl/cpu
-python app.py
-```
-
----
-
-## Notes for Render free tier
-
-- **512 MB RAM** — keep `WHISPER_MODEL=tiny`. Larger models will OOM.
-- Free instances sleep after idle; first request can take ~30–60s.
-- Long videos/transcriptions may hit platform timeouts; prefer short clips.
-
----
+Or manual:
+- New → Web Service
+- Runtime: **Docker**
+- Plan: **Free**
+- Env var: `WHISPER_MODEL=tiny`
 
 ## API examples
 
 ```bash
+# Health
 curl https://YOUR.onrender.com/health
-curl -X POST -F "audio=@sample.mp3" https://YOUR.onrender.com/transcribe
+
+# Transcribe (the main unique feature)
+curl -X POST -F "audio=@clip.mp3" https://YOUR.onrender.com/transcribe
+
+# Also accepts video directly
+curl -X POST -F "video=@clip.mp4" https://YOUR.onrender.com/transcribe
+
+# Extract audio
 curl -X POST -F "video=@clip.mp4" -o audio.mp3 https://YOUR.onrender.com/separate
 ```
+
+## Notes
+
+- First request after sleep can take 30–60 seconds.
+- Keep videos ≤ 3 minutes.
+- Use `tiny` model only on free plan.
 
 ## License
 
